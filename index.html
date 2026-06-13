@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#26362f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="GeoStamp">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>GeoStamp</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="app-bar">
+    <div>
+      <h1>GeoStamp</h1>
+      <p id="statusText">Ready</p>
+    </div>
+    <button id="installButton" class="ghost-button" type="button" hidden>Install</button>
+  </header>
+
+  <main class="shell">
+    <section class="workspace" aria-label="Photo workspace">
+      <div class="file-strip">
+        <label class="file-button">
+          Photos
+          <input id="photoInput" type="file" accept="image/*" multiple>
+        </label>
+        <label class="file-button secondary">
+          Map
+          <input id="mapInput" type="file" accept="image/*">
+        </label>
+        <label class="file-button secondary">
+          Logo
+          <input id="logoInput" type="file" accept="image/*">
+        </label>
+        <label class="file-button secondary">
+          Font
+          <input id="fontInput" type="file" accept=".ttf,.otf,font/ttf,font/otf">
+        </label>
+      </div>
+
+      <div id="previewWrap" class="preview-wrap">
+        <canvas id="previewCanvas" aria-label="Stamped preview"></canvas>
+        <div id="cropOverlay" class="crop-overlay" hidden>
+          <div id="cropBox" class="crop-box">
+            <span class="crop-handle nw" data-handle="nw"></span>
+            <span class="crop-handle ne" data-handle="ne"></span>
+            <span class="crop-handle se" data-handle="se"></span>
+            <span class="crop-handle sw" data-handle="sw"></span>
+          </div>
+        </div>
+        <div id="emptyState" class="empty-state">
+          <strong>No photo selected</strong>
+          <span>Choose one or more images.</span>
+        </div>
+      </div>
+
+      <div class="run-bar">
+        <button id="processButton" class="primary-button" type="button">Process Photos</button>
+        <button id="clearButton" class="ghost-button" type="button">Clear</button>
+        <div class="meter" aria-label="Progress">
+          <span id="progressFill"></span>
+        </div>
+      </div>
+
+      <div class="selected-row">
+        <span id="photoCount">0 photos</span>
+        <span id="assetStatus">No map, no logo, system font</span>
+      </div>
+
+      <section class="results" aria-label="Generated photos">
+        <h2>Output</h2>
+        <div id="resultList" class="result-list"></div>
+      </section>
+    </section>
+
+    <aside class="settings" aria-label="Stamp settings">
+      <section class="control-group">
+        <h2>Date</h2>
+        <div class="grid-2">
+          <label>
+            Day
+            <input id="dateInput" type="date" value="2025-01-29">
+          </label>
+          <label>
+            Time
+            <input id="timeInput" type="time" value="12:18">
+          </label>
+        </div>
+        <label>
+          Increment minutes
+          <input id="incrementInput" type="number" inputmode="numeric" value="0" step="1">
+        </label>
+        <label>
+          Time zone label
+          <input id="tzInput" type="text" value="GMT +05:30">
+        </label>
+      </section>
+
+      <section class="control-group">
+        <h2>Location</h2>
+        <label>
+          Title
+          <input id="line1Input" type="text" value="Srikakulam, Andhra Pradesh, India">
+        </label>
+        <label>
+          Address line 1
+          <input id="line2Input" type="text" value="8v7q+6jp,  Shanti Nagar Colony, Balaga, Srikakulam,">
+        </label>
+        <label>
+          Address line 2
+          <input id="line3Input" type="text" value="Andhra Pradesh 532001, India">
+        </label>
+        <div class="grid-2">
+          <label>
+            Latitude
+            <input id="latInput" type="number" inputmode="decimal" value="18.31289" step="0.000001">
+          </label>
+          <label>
+            Longitude
+            <input id="lonInput" type="number" inputmode="decimal" value="83.888937" step="0.000001">
+          </label>
+        </div>
+      </section>
+
+      <section class="control-group">
+        <h2>Crop</h2>
+        <label class="check-row">
+          <input id="cropEnableInput" type="checkbox">
+          <span>Crop photos</span>
+        </label>
+        <label>
+          Aspect
+          <select id="cropAspectInput">
+            <option value="free">Free</option>
+            <option value="original">Original</option>
+            <option value="1:1">Square</option>
+            <option value="4:5">4:5</option>
+            <option value="3:4">3:4</option>
+            <option value="16:9">16:9</option>
+            <option value="9:16">9:16</option>
+          </select>
+        </label>
+        <div class="button-row">
+          <button id="cropDoneButton" class="inline-button primary-inline" type="button">Done Crop</button>
+          <button id="cropResetButton" class="inline-button" type="button">Reset Crop</button>
+        </div>
+      </section>
+
+      <section class="control-group">
+        <h2>Stamp</h2>
+        <label class="range-label">
+          Box opacity
+          <input id="opacityInput" type="range" min="0" max="255" value="150">
+          <output id="opacityValue">150</output>
+        </label>
+        <label class="range-label">
+          JPEG quality
+          <input id="qualityInput" type="range" min="70" max="98" value="95">
+          <output id="qualityValue">95</output>
+        </label>
+        <label>
+          Max edge px
+          <input id="maxEdgeInput" type="number" inputmode="numeric" value="4096" min="800" max="9000" step="128">
+        </label>
+      </section>
+
+      <section class="control-group">
+        <h2>GPS Label</h2>
+        <label class="check-row">
+          <input id="gpsEnableInput" type="checkbox" checked>
+          <span>Show label</span>
+        </label>
+        <label class="check-row">
+          <input id="gpsBgInput" type="checkbox" checked>
+          <span>Label background</span>
+        </label>
+        <label>
+          Label text
+          <input id="gpsTextInput" type="text" value="GPS Map Camera">
+        </label>
+        <div class="grid-2">
+          <label>
+            Logo height
+            <input id="logoHeightInput" type="number" inputmode="numeric" value="52" min="16" max="300">
+          </label>
+          <label>
+            Margin
+            <input id="gpsMarginInput" type="number" inputmode="numeric" value="10" min="0" max="200">
+          </label>
+        </div>
+        <div class="grid-2">
+          <label>
+            Offset X
+            <input id="gpsOffsetXInput" type="number" inputmode="numeric" value="0" min="-2000" max="2000">
+          </label>
+          <label>
+            Offset Y
+            <input id="gpsOffsetYInput" type="number" inputmode="numeric" value="0" min="-2000" max="2000">
+          </label>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <template id="resultTemplate">
+    <article class="result-item">
+      <img alt="">
+      <div>
+        <h3></h3>
+        <p></p>
+        <div class="result-actions">
+          <a class="download-link" download>Download</a>
+          <button class="share-button" type="button">Share</button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
