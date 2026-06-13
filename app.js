@@ -56,6 +56,8 @@ const els = {
   cropAspectInput: document.getElementById("cropAspectInput"),
   cropDoneButton: document.getElementById("cropDoneButton"),
   cropResetButton: document.getElementById("cropResetButton"),
+  stampSizeInput: document.getElementById("stampSizeInput"),
+  stampSizeValue: document.getElementById("stampSizeValue"),
   opacityInput: document.getElementById("opacityInput"),
   opacityValue: document.getElementById("opacityValue"),
   qualityInput: document.getElementById("qualityInput"),
@@ -97,6 +99,7 @@ function currentOptions() {
     incrementMinutes: Math.trunc(numberValue(els.incrementInput, 0)),
     cropEnabled: els.cropEnableInput.checked,
     cropAspect: els.cropAspectInput.value,
+    stampSizeRatio: clamp(numberValue(els.stampSizeInput, 18), 10, 35) / 100,
     opacity: Math.trunc(numberValue(els.opacityInput, 150)),
     quality: clamp(numberValue(els.qualityInput, 95) / 100, 0.7, 0.98),
     maxEdge: Math.trunc(clamp(numberValue(els.maxEdgeInput, 4096), 800, 9000)),
@@ -306,7 +309,9 @@ function drawStampedPhoto(image, options, date, previewOnly = false) {
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(image, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, W, H);
 
-  const stampH = Math.trunc(clamp(H * 0.18, 120, 320));
+  const minStampH = Math.min(120, H * 0.35);
+  const maxStampH = Math.max(minStampH, H * 0.35);
+  const stampH = Math.trunc(clamp(H * options.stampSizeRatio, minStampH, maxStampH));
   const pad = Math.trunc(clamp(stampH * 0.06, 8, 16));
   const mapSize = stampH - 2 * pad;
   const stampY0 = H - stampH;
@@ -874,6 +879,7 @@ function updateCropButtons() {
 }
 
 function updateRangeOutputs() {
+  els.stampSizeValue.textContent = `${els.stampSizeInput.value}%`;
   els.opacityValue.textContent = els.opacityInput.value;
   els.qualityValue.textContent = els.qualityInput.value;
 }
